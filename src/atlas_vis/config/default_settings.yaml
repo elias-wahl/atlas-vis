@@ -1,0 +1,22 @@
+visible_variables: []
+temporal_strategy: "mean_span"
+spatial_bbox: [-90.0, -180.0, 90.0, 180.0]
+parser_configs:
+  default:
+    spatial_stride: 1
+    temporal_stride: 1
+    max_domain_x: 300
+    max_domain_y: 300
+    max_domain_z: 50
+  WRF:
+    spatial_stride: 2
+    temporal_stride: 1
+    max_domain_x: 400
+    max_domain_y: 400
+    max_domain_z: 45
+  UAS:
+    spatial_stride: 1
+    temporal_stride: 1
+    max_domain_x: 5000
+    max_domain_y: 5000
+    max_domain_z: 100
