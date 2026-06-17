@@ -1,26 +1,29 @@
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class AtlasVisError(Exception):
     """
     Base exception class for all atlas_vis system failures.
+
     Allows for structured serialization of errors to push safely to the Trame frontend UI
     via ASGI WebSocket channels without breaking the continuous event loop.
     """
 
-    def __init__(self, message: str, context: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, message: str, context: dict[str, Any] | None = None) -> None:
+        """Initialize the base error with a message and optional execution context."""
         super().__init__(message)
         self.message = message
         self.context = context or {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
-        Serializes the exception for WebSocket transmission.
+        Serialize the exception for WebSocket transmission.
 
         Returns:
-            Dict[str, Any]: A dictionary containing the error class name, the human-readable message,
-            the execution context dictionary, and the full stack traceback.
+            dict[str, Any]: A dictionary containing the error class name, the human-readable message,
+                the execution context dictionary, and the full stack traceback.
+
         """
         return {
             "error_class": self.__class__.__name__,

@@ -7,15 +7,16 @@ name = "atlas_vis"
 version = "0.1.0"
 description = "High-performance out-of-core meteorological visualization framework utilizing PyVista, Trame, Dask, PyProj, and Xarray."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = "==3.12"
 license = { text = "MIT" }
 authors = [{ name = "AtlasVis Core Engineering Team", email = "engineering@atlasvis.local" }]
 dependencies = [
     "xarray>=2023.1.0",
     "dask[complete]>=2023.1.0",
-    "xwrf>=0.2.0",
+    "xwrf>=0.0.5",
     "pyvista[all,jupyter]>=0.40.0",
-    "pint-array>=0.6.0",
+    "pint>=0.21.0",
+    "pint-xarray>=0.3.0",
     "platformdirs>=3.0.0",
     "psutil>=5.9.0",
     "pyproj>=3.5.0",
@@ -48,7 +49,7 @@ dev = [
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py312"
 select = ["E", "F", "W", "I", "N", "D", "UP", "ASYNC", "BLE", "B", "A", "C4", "T10", "ISC", "ICN", "PT", "Q", "RET", "SIM", "TID", "ARG", "PTH", "ERA", "PL", "TRY", "RUF"]
 ignore = ["D100", "D104", "D203", "D212", "E501", "TRY003"]
 
