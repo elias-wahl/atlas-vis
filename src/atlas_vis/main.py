@@ -107,9 +107,7 @@ async def websocket_orchestrator(websocket: WebSocket) -> None:
             message="An unhandled application exception occurred during active background pipeline execution.",
             context={"system_exception": str(exc)},
         )
-        await websocket.send_json(
-            {"event": "toast_notification", "error": safe_error.to_dict()}
-        )
+        await websocket.send_json({"event": "toast_notification", "error": safe_error.to_dict()})
 
 
 @app.get("/api/browse")
@@ -137,9 +135,7 @@ async def browse_directory(target_path: str | None = None) -> dict[str, Any]:
         return {
             "status": "success",
             "current_path": str(current),
-            "parent_path": str(current.parent)
-            if current.parent != current
-            else str(current),
+            "parent_path": str(current.parent) if current.parent != current else str(current),
             "directories": sorted(directories),
             "files": sorted(files),
         }
@@ -152,9 +148,7 @@ async def browse_directory(target_path: str | None = None) -> dict[str, Any]:
 
 @cli_app.command()
 def start(host: str = "0.0.0.0", api_port: int = 8000, ui_port: int = 8080) -> None:
-    """
-    Start both the AtlasVis API backend and the Trame rendering frontend.
-    """
+    """Start both the AtlasVis API backend and the Trame rendering frontend."""
     typer.echo(f"Starting AtlasVis API on port {api_port} and UI on port {ui_port}...")
 
     # We import the UI server locally to avoid initializing VTK in the main thread prematurely

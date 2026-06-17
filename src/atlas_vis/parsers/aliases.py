@@ -2,7 +2,8 @@ import itertools
 
 
 class Aliases:
-    """Centralized registry for resolving heterogeneous atmospheric variable and platform names.
+    """
+    Centralized registry for resolving heterogeneous atmospheric variable and platform names.
 
     Dynamically expands base aliases using common meteorological suffixes and casing
     to generate exhaustive exact-match lookup lists (>500 strings per key).
@@ -16,7 +17,8 @@ class Aliases:
         self._vars_dict = self._build_var_aliases()
 
     def for_input(self, key: str) -> list[str]:
-        """Retrieve the list of complete string matches for a specific input platform.
+        """
+        Retrieve the list of complete string matches for a specific input platform.
 
         Args:
             key (str): The requested input type (e.g., 'uas', 'simulation').
@@ -33,7 +35,8 @@ class Aliases:
         return self._input_dict[key]
 
     def for_vars(self, key: str) -> list[str]:
-        """Retrieve the list of complete string matches for a MetPy atmospheric variable.
+        """
+        Retrieve the list of complete string matches for a MetPy atmospheric variable.
 
         Args:
             key (str): The requested MetPy variable name (e.g., 'temperature').
@@ -50,7 +53,8 @@ class Aliases:
         return self._vars_dict[key]
 
     def get_match(self, alias: str) -> str | None:
-        """Retrieve the first matching parameter for a given alias.
+        """
+        Retrieve the first matching parameter for a given alias.
 
         Leverages the underlying length-descending search order to avoid
         mismatches (e.g., catching 'potential_temperature' before 'temperature').
@@ -65,7 +69,8 @@ class Aliases:
         return matches[0] if matches else None
 
     def get_all_matches(self, alias: str) -> list[str]:
-        """Retrieve all matching parameters for a given alias.
+        """
+        Retrieve all matching parameters for a given alias.
 
         Args:
             alias (str): The alias string to look up.
@@ -76,7 +81,8 @@ class Aliases:
         return self._find_matches(alias)
 
     def _find_matches(self, alias: str) -> list[str]:
-        """Base function to find all matching keys for a given alias.
+        """
+        Base function to find all matching keys for a given alias.
 
         Searches through the ordered dictionaries to ensure longer, more
         specific keys are evaluated first.
@@ -100,7 +106,8 @@ class Aliases:
         return matches
 
     def _expand_aliases(self, base_list: list[str], is_var: bool = True) -> list[str]:
-        """Procedurally generate massive exact-match string arrays.
+        """
+        Procedurally generate massive exact-match string arrays.
 
         Combines base names with expanded meteorological prefixes, suffixes, casing,
         and spacing variations. Deduplicates the final output using a set.
@@ -138,9 +145,7 @@ class Aliases:
             "_3d",
         ]
         if is_var:
-            suffixes.extend(
-                ["_sfc", "_2m", "_10m", "_profile", "_lvl", "_surface", "_lev"]
-            )
+            suffixes.extend(["_sfc", "_2m", "_10m", "_profile", "_lvl", "_surface", "_lev"])
 
         # Expanded prefix list
         prefixes = ["", "val_", "obs_", "avg_", "mean_", "raw_", "inst_", "curr_"]
@@ -243,9 +248,7 @@ class Aliases:
 
         # Sort keys by length descending to ensure specific multi-word platforms are checked first
         sorted_keys = sorted(base_inputs.keys(), key=len, reverse=True)
-        return {
-            k: self._expand_aliases(base_inputs[k], is_var=False) for k in sorted_keys
-        }
+        return {k: self._expand_aliases(base_inputs[k], is_var=False) for k in sorted_keys}
 
     def _build_var_aliases(self) -> dict[str, list[str]]:
         """Construct the variable mapping for the top 50 MetPy targets, ordered by key length descending."""
@@ -559,4 +562,3 @@ class Aliases:
 
 
 aliases = Aliases()
-

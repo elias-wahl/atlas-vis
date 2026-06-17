@@ -41,9 +41,7 @@ class GeoSphere(AbstractBaseParser):
         with open(file_path, "r", encoding="latin-1") as file:
             for line in file:
                 # 1. Extract Station and TAWES Number
-                match_station = re.search(
-                    r"# Station:\s*(.*?),\s*Tawes-Nummer:\s*(\d+)", line
-                )
+                match_station = re.search(r"# Station:\s*(.*?),\s*Tawes-Nummer:\s*(\d+)", line)
                 if match_station:
                     metadata["Station"] = match_station.group(1).strip()
                     metadata["TAWES_Nummer"] = int(match_station.group(2))
@@ -77,9 +75,7 @@ class GeoSphere(AbstractBaseParser):
                     break
 
                 # Read the data, ignoring the # comments, using Latin-1 encoding
-                df = pd.read_csv(
-                    file_path, sep=r"\s+", comment="#", header=None, encoding="latin-1"
-                )
+                df = pd.read_csv(file_path, sep=r"\s+", comment="#", header=None, encoding="latin-1")
 
                 # Apply the dynamically found column names
                 if len(column_names) == len(df.columns):
