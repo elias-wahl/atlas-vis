@@ -55,6 +55,20 @@ class SetupRequest(BaseModel):
     processing: ProcessingSettings
 
 
+def run_api():
+    """Run the API server - moved to module level for Windows multiprocessing compatibility."""
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+def run_ui():
+    """Run the UI server - moved to module level for Windows multiprocessing compatibility."""
+    # We import the UI server locally to avoid initializing VTK in the main thread prematurely
+    from atlas_vis.visualization.trame_server import TrameStreamingServer
+
+    ui_server = TrameStreamingServer(port=8080)
+    ui_server.start()
+
+
 @app.post("/api/settings")
 async def apply_mutations(req: SetupRequest) -> dict[str, Any]:
     """
@@ -107,9 +121,7 @@ async def websocket_orchestrator(websocket: WebSocket) -> None:
             message="An unhandled application exception occurred during active background pipeline execution.",
             context={"system_exception": str(exc)},
         )
-        await websocket.send_json(
-            {"event": "toast_notification", "error": safe_error.to_dict()}
-        )
+        await websocket.send_json({"event": "toast_notification", "error": safe_error.to_dict()})
 
 
 @app.get("/api/browse")
@@ -137,9 +149,7 @@ async def browse_directory(target_path: str | None = None) -> dict[str, Any]:
         return {
             "status": "success",
             "current_path": str(current),
-            "parent_path": str(current.parent)
-            if current.parent != current
-            else str(current),
+            "parent_path": str(current.parent) if current.parent != current else str(current),
             "directories": sorted(directories),
             "files": sorted(files),
         }
@@ -156,16 +166,6 @@ def start(host: str = "0.0.0.0", api_port: int = 8000, ui_port: int = 8080) -> N
     Start both the AtlasVis API backend and the Trame rendering frontend.
     """
     typer.echo(f"Starting AtlasVis API on port {api_port} and UI on port {ui_port}...")
-
-    # We import the UI server locally to avoid initializing VTK in the main thread prematurely
-    from atlas_vis.visualization.trame_server import TrameStreamingServer
-
-    def run_api():
-        uvicorn.run(app, host=host, port=api_port)
-
-    def run_ui():
-        ui_server = TrameStreamingServer(port=ui_port)
-        ui_server.start()
 
     # Launch both services as separate processes
     api_process = multiprocessing.Process(target=run_api)
