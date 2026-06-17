@@ -162,9 +162,7 @@ async def browse_directory(target_path: str | None = None) -> dict[str, Any]:
 
 @cli_app.command()
 def start(host: str = "0.0.0.0", api_port: int = 8000, ui_port: int = 8080) -> None:
-    """
-    Start both the AtlasVis API backend and the Trame rendering frontend.
-    """
+    """Start both the AtlasVis API backend and the Trame rendering frontend."""
     typer.echo(f"Starting AtlasVis API on port {api_port} and UI on port {ui_port}...")
 
     # Launch both services as separate processes
