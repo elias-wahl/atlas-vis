@@ -263,6 +263,7 @@ class Aliases:
                 "t2m",
                 "t_sfc",
                 "air_temperature",
+                "pt100",
             ],
             "potential_temperature": [
                 "theta",
@@ -272,6 +273,7 @@ class Aliases:
                 "pottemp",
                 "thta",
                 "air_potential_temperature",
+                "t_pot",
             ],
             "equivalent_potential_temperature": [
                 "theta_e",
@@ -314,6 +316,7 @@ class Aliases:
                 "relhum",
                 "rhum",
                 "hur",
+                "hum",
             ],
             "specific_humidity": [
                 "q",
@@ -330,6 +333,7 @@ class Aliases:
                 "water_vapor_mixing_ratio",
                 "qvapor",
                 "qv",
+                "m_hu",
             ],
             "precipitable_water": [
                 "pw",
@@ -393,6 +397,8 @@ class Aliases:
                 "wind_mag",
                 "uv",
                 "sfc_wind",
+                "ff",
+                "wspeed",
             ],
             "wind_direction": [
                 "wd",
@@ -401,6 +407,7 @@ class Aliases:
                 "wind_dir",
                 "direction",
                 "phi",
+                "dd",
             ],
             "vorticity": [
                 "vort",
@@ -421,8 +428,19 @@ class Aliases:
                 "prmsl",
                 "psl",
             ],
-            "surface_pressure": ["psfc", "surface_pressure", "sfc_pres", "sp", "ps"],
-            "geopotential": ["phi", "geopotential", "geopot", "zg_phi"],
+            "surface_pressure": [
+                "psfc",
+                "surface_pressure",
+                "sfc_pres",
+                "sp",
+                "ps",
+            ],
+            "geopotential": [
+                "phi",
+                "geopotential",
+                "geopot",
+                "zg_phi",
+            ],
             "geopotential_height": [
                 "z",
                 "zg",
