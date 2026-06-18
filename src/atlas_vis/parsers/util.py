@@ -49,7 +49,8 @@ def pandas_to_metpy_xarray(
     if "time" in df_clean.columns:
         if not pd.api.types.is_datetime64_any_dtype(df_clean["time"]):
             logger.info("Converting 'time' column to datetime64.")
-            df_clean["time"] = pd.to_datetime(df_clean["time"])
+            # Cast to string first to ensure integer timestamps like 202507010000 are parsed as dates, not nanoseconds
+            df_clean["time"] = pd.to_datetime(df_clean["time"].astype(str))
         df_clean = df_clean.set_index("time")
     elif df_clean.index.name != "time":
         raise ValueError(
