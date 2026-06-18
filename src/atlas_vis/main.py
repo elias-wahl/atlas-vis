@@ -60,12 +60,21 @@ def run_api():
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
-def run_ui():
+def run_ui(headless: bool = False, remote_render: bool = False, debug: bool = False):
     """Run the UI server - moved to module level for Windows multiprocessing compatibility."""
+    if headless:
+        import pyvista as pv
+        try:
+            pv.start_xvfb()
+            print("Xvfb started successfully for headless rendering.")
+        except Exception as e:
+            print(f"Warning: Could not start Xvfb. Headless rendering might fail: {e}")
+
     # We import the UI server locally to avoid initializing VTK in the main thread prematurely
     from atlas_vis.visualization.trame_server import TrameStreamingServer
 
-    ui_server = TrameStreamingServer(port=8080)
+    rendering_mode = "remote" if remote_render else "local"
+    ui_server = TrameStreamingServer(port=8080, rendering_mode=rendering_mode, debug=debug)
     ui_server.start()
 
 
@@ -143,15 +152,20 @@ async def browse_directory(target_path: str | None = None) -> dict[str, Any]:
                 if item.is_dir():
                     directories.append(item.name)
                 elif item.is_file():
-                    # FIX: Removed the suffix filter so ALL files appear in the UI
-                    files.append(item.name)
+                    ext = item.suffix.lower()
+                    parser_type = "unsupported"
+                    for parser in _global_parsers:
+                        if ext in parser.input_data_format:
+                            parser_type = parser.parser_type
+                            break
+                    files.append({"name": item.name, "type": parser_type})
 
         return {
             "status": "success",
             "current_path": str(current),
             "parent_path": str(current.parent) if current.parent != current else str(current),
             "directories": sorted(directories),
-            "files": sorted(files),
+            "files": sorted(files, key=lambda f: f["name"]),
         }
     except Exception as e:
         return {
@@ -160,14 +174,87 @@ async def browse_directory(target_path: str | None = None) -> dict[str, Any]:
         }
 
 
+# Load parsers globally to avoid reloading on every request
+from atlas_vis.parsers.pandas import GeoSphere
+from atlas_vis.parsers.registry import TrustedPluginRegistry
+from atlas_vis.parsers.tif import TifParser
+
+_parser_registry = TrustedPluginRegistry()
+try:
+    _parser_registry.load_plugins_from_directory()
+except Exception:
+    pass
+
+_global_parsers = [GeoSphere(), TifParser()]
+for p_class in _parser_registry._loaded_parsers.values():
+    _global_parsers.append(p_class())
+
+# Pre-warm pandas and xarray lazy-loaded modules to prevent a ~0.7s penalty on the first user click
+import pandas as pd
+
+from atlas_vis.parsers.util import pandas_to_metpy_xarray
+
+try:
+    _dummy_df = pd.DataFrame({"time": [pd.Timestamp("2020-01-01")], "dummy": [1]})
+    _dummy_df.attrs["station"] = "prewarm_station"
+    pandas_to_metpy_xarray(_dummy_df)
+except Exception:
+    pass
+
+
+@app.get("/api/metadata")
+def get_metadata(filepath: str) -> dict[str, Any]:
+    """Retrieve metadata and variable fields from a selected dataset file."""
+    try:
+        path = Path(filepath)
+        ext = path.suffix.lower()
+        variables = []
+
+        parser_found = False
+        for parser in _global_parsers:
+            if ext in parser.input_data_format:
+                parser_found = True
+                ds = parser.load_metadata(filepath)
+                if ds is not None and len(ds.data_vars) > 0:
+                    from atlas_vis.parsers.aliases import aliases
+
+                    # Collect data variables
+                    for var in ds.data_vars.keys():
+                        mapped = aliases.get_fuzzy_match(str(var)) is not None
+                        variables.append({"name": str(var), "mapped": mapped})
+                    break
+                else:
+                    return {"status": "error", "message": "Parser returned no fields."}
+
+        if not parser_found:
+            return {"status": "error", "message": "Unsupported file format."}
+
+        return {"status": "success", "variables": variables}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 @cli_app.command()
-def start(host: str = "0.0.0.0", api_port: int = 8000, ui_port: int = 8080) -> None:
+def start(
+    host: str = "0.0.0.0", 
+    api_port: int = 8000, 
+    ui_port: int = 8080,
+    headless: bool = False,
+    remote_render: bool = False,
+    debug: bool = False
+) -> None:
     """Start both the AtlasVis API backend and the Trame rendering frontend."""
     typer.echo(f"Starting AtlasVis API on port {api_port} and UI on port {ui_port}...")
+    if debug:
+        typer.echo("Debug mode enabled.")
+    if headless:
+        typer.echo("Headless mode requested (will attempt to start Xvfb).")
+    if remote_render:
+        typer.echo("Remote rendering mode requested (image streaming).")
 
     # Launch both services as separate processes
     api_process = multiprocessing.Process(target=run_api)
-    ui_process = multiprocessing.Process(target=run_ui)
+    ui_process = multiprocessing.Process(target=run_ui, args=(headless, remote_render, debug))
 
     api_process.start()
     ui_process.start()

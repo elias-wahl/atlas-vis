@@ -40,6 +40,10 @@ class UserSettings(BaseModel):
     visible_variables: list[str]
     temporal_strategy: str
     spatial_bbox: list[float]
+    domain_center_lon: float = 11.931428
+    domain_center_lat: float = 47.456408
+    domain_size_x_km: float = 10.0
+    domain_size_y_km: float = 10.0
     parser_configs: dict[str, ProcessingSettings]
 
 
