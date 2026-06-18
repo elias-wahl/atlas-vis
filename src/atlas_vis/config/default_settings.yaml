@@ -1,6 +1,18 @@
 visible_variables: []
 temporal_strategy: "mean_span"
 spatial_bbox: [-90.0, -180.0, 90.0, 180.0]
+
+# Execution and Engine Parameters
+rendering_mode: "local"
+headless: false
+debug: false
+
+# Domain selection properties (size is measured in kilometers)
+domain_center_lon: 11.931428  # Radfeld, Tirol
+domain_center_lat: 47.456408  # Radfeld, Tirol
+domain_size_x_km: 0.5        # Domain width in kilometers
+domain_size_y_km: 0.5        # Domain height in kilometers
+
 parser_configs:
   default:
     spatial_stride: 1

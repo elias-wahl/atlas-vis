@@ -31,7 +31,9 @@ dependencies = [
     "trame-vuetify>=2.0.0",
     "trame-vtk>=2.0.0",
     "pydantic>=2.4.0",
-    "typer>=0.9.0"
+    "typer>=0.9.0",
+    "pandas>=2.0.0",
+    "rioxarray>=0.14.0"
 ]
 
 [project.scripts]

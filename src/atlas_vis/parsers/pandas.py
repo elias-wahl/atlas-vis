@@ -5,6 +5,7 @@ import xarray as xr
 
 from .base import AbstractBaseParser
 from .util import pandas_to_metpy_xarray
+from .aliases import aliases
 
 
 class GeoSphere(AbstractBaseParser):
@@ -34,7 +35,7 @@ class GeoSphere(AbstractBaseParser):
     def key_words(self) -> list[str]:
         return ["geosphere"]
 
-    def load_dataset(self, file_path: str) -> xr.Dataset | None:
+    def load_dataset(self, file_path: str, metadata_only: bool = False) -> xr.Dataset | None:
         column_names = []
         metadata = {}  # Dictionary to hold all our extracted header info
 
@@ -74,19 +75,48 @@ class GeoSphere(AbstractBaseParser):
                 if not line.startswith("#") and line.strip():
                     break
 
-                # Read the data, ignoring the # comments, using Latin-1 encoding
-                df = pd.read_csv(file_path, sep=r"\s+", comment="#", header=None, encoding="latin-1")
+        # Map extracted column names using the persistent user cache and global aliases registry
+        from atlas_vis.core.mapping_cache import mapping_cache
+        
+        file_mapping = mapping_cache.get_mapping(file_path)
+        mapped_columns = []
+        mapping_updated = False
+        
+        for col in column_names:
+            if col in file_mapping:
+                mapped_columns.append(file_mapping[col])
+            else:
+                matched = aliases.get_fuzzy_match(col)
+                res = matched if matched else col
+                mapped_columns.append(res)
+                file_mapping[col] = res
+                mapping_updated = True
+                
+        if mapping_updated:
+            mapping_cache.set_mapping(file_path, file_mapping)
 
-                # Apply the dynamically found column names
-                if len(column_names) == len(df.columns):
-                    df.columns = column_names
-                else:
-                    print("Warning: Detected columns do not match data width.")
+        if metadata_only:
+            # If only metadata is requested, return an empty dataset configured with the parsed header info
+            df = pd.DataFrame(columns=mapped_columns)
+            df.attrs = metadata
+            return pandas_to_metpy_xarray(df)
 
-                # Store the extracted metadata in the DataFrame's official attrs dictionary
-                df.attrs = metadata
+        # Read the data, ignoring the # comments, using Latin-1 encoding
+        df = pd.read_csv(file_path, sep=r"\s+", comment="#", header=None, encoding="latin-1")
 
-                # Convert to xarray Dataset using the utility function, which also applies CF-compliant coordinate handling
-                xarray = pandas_to_metpy_xarray(df)
+        # Apply the dynamically found column names
+        if len(mapped_columns) == len(df.columns):
+            df.columns = mapped_columns
+        else:
+            print("Warning: Detected columns do not match data width.")
 
-                return xarray
+        # Store the extracted metadata in the DataFrame's official attrs dictionary
+        df.attrs = metadata
+
+        # Convert to xarray Dataset using the utility function, which also applies CF-compliant coordinate handling
+        xarray = pandas_to_metpy_xarray(df)
+
+        return xarray
+
+    def load_metadata(self, file_path: str) -> xr.Dataset | None:
+        return self.load_dataset(file_path, metadata_only=True)
