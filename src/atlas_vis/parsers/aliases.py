@@ -1,4 +1,5 @@
 import itertools
+import functools
 
 
 class Aliases:
@@ -79,6 +80,38 @@ class Aliases:
             list[str]: All keys that contain the given alias.
         """
         return self._find_matches(alias)
+
+    @functools.lru_cache(maxsize=128)
+    def get_fuzzy_match(self, alias: str) -> str | None:
+        """
+        Retrieve the first matching parameter using substring/fuzzy matching.
+        This handles cases where the alias contains units or extra metadata.
+        """
+        clean_alias = alias.lower().strip()
+        
+        # Strip common formatting like text in parentheses
+        import re
+        stripped_alias = re.sub(r'\(.*?\)', '', clean_alias).strip()
+
+        # Check for exact matches first
+        exact_match = self.get_match(stripped_alias)
+        if exact_match:
+            return exact_match
+
+        # Then substring matches
+        # Because dicts are ordered by length descending, longer more specific variables match first
+        for registry in (self._vars_dict, self._input_dict):
+            for key, expanded_aliases in registry.items():
+                for exp_alias in expanded_aliases:
+                    if len(exp_alias) < 3:
+                        # For very short aliases like 't', 'e', 'u', 'v', require exact word match
+                        pattern = r'\b' + re.escape(exp_alias) + r'\b'
+                        if re.search(pattern, stripped_alias):
+                            return key
+                    else:
+                        if exp_alias in stripped_alias:
+                            return key
+        return None
 
     def _find_matches(self, alias: str) -> list[str]:
         """
@@ -253,6 +286,18 @@ class Aliases:
     def _build_var_aliases(self) -> dict[str, list[str]]:
         """Construct the variable mapping for the top 50 MetPy targets, ordered by key length descending."""
         base_vars = {
+            # Time & Coordinates
+            "time": [
+                "time",
+                "datum",
+                "zeit",
+                "date",
+                "datetime",
+                "timestamp",
+                "Datum/Zeit",
+                "valid_time",
+                "time_obs",
+            ],
             # Thermodynamics & Temperature
             "temperature": [
                 "t",
@@ -263,6 +308,7 @@ class Aliases:
                 "t2m",
                 "t_sfc",
                 "air_temperature",
+                "lufttemperatur",
             ],
             "potential_temperature": [
                 "theta",
@@ -314,6 +360,8 @@ class Aliases:
                 "relhum",
                 "rhum",
                 "hur",
+                "relative feuchte",
+                "rel_feuchte",
             ],
             "specific_humidity": [
                 "q",
@@ -393,6 +441,17 @@ class Aliases:
                 "wind_mag",
                 "uv",
                 "sfc_wind",
+                "windgeschwindigkeit",
+            ],
+            "wind_gust": [
+                "gust",
+                "wind_gust",
+                "windspitze",
+            ],
+            "wind_gust_direction": [
+                "wind_gust_direction",
+                "gust_dir",
+                "windrichtung der windspitze",
             ],
             "wind_direction": [
                 "wd",
@@ -401,6 +460,7 @@ class Aliases:
                 "wind_dir",
                 "direction",
                 "phi",
+                "windrichtung",
             ],
             "vorticity": [
                 "vort",
@@ -412,7 +472,7 @@ class Aliases:
             ],
             "divergence": ["div", "divergence", "wind_divergence", "divg", "d"],
             # Pressure
-            "pressure": ["p", "pres", "pressure", "air_pressure", "p_sfc", "ps"],
+            "pressure": ["p", "pres", "pressure", "air_pressure", "p_sfc", "ps", "luftdruck"],
             "sea_level_pressure": [
                 "slp",
                 "mslp",
@@ -440,6 +500,7 @@ class Aliases:
                 "downward_shortwave",
                 "glw",
                 "ssrd",
+                "kw-strahlung unten",
             ],
             "shortwave_radiation_up": [
                 "swup",
@@ -448,6 +509,7 @@ class Aliases:
                 "shortwave_up",
                 "upward_shortwave",
                 "ssru",
+                "kw-strahlung oben",
             ],
             "longwave_radiation_down": [
                 "lwdown",
@@ -456,6 +518,7 @@ class Aliases:
                 "longwave_down",
                 "downward_longwave",
                 "strd",
+                "lw-strahlung unten",
             ],
             "longwave_radiation_up": [
                 "lwup",
@@ -464,6 +527,7 @@ class Aliases:
                 "longwave_up",
                 "upward_longwave",
                 "stru",
+                "lw-strahlung oben",
             ],
             "net_radiation": ["rnet", "net_rad", "net_radiation", "rn"],
             "albedo": ["albedo", "alb", "surface_albedo", "sw_albedo", "al"],
